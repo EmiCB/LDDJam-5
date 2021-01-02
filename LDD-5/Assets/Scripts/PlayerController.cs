@@ -8,21 +8,23 @@ public class PlayerController : MonoBehaviour {
         Horizonal,  // Default movement mode
         ClingingToWall,
         WallJumping,
+        FastDropping,
     };
 
     public enum HeadAbility {
         None,
-        MovementSpeedUp
+        MovementSpeedUp,
     }
 
     public enum ArmAbility {
         None,
-        WallCling
+        WallCling,
     }
 
     public enum LegAbility {
         None,
-        DoubleJump
+        DoubleJump,
+        FastDrop,
     }
 
     private Rigidbody2D rigidbody2D = null;
@@ -38,7 +40,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float wallJumpHorizSpeed = 3.0f;
     [SerializeField] private float wallJumpVertSpeed = 6.0f;
     [SerializeField] private float wallJumpDuration = 0.3f;
-    private bool isClingingToWall = false;
+    [SerializeField] private float fastDropVertSpeed = 20.0f;
     [SerializeField] private PlayerMovementMode movement = PlayerMovementMode.Horizonal;
     public HeadAbility currentHeadAbility = HeadAbility.None;
     public ArmAbility currentArmAbility = ArmAbility.None;
@@ -77,6 +79,7 @@ public class PlayerController : MonoBehaviour {
         // wall clinging
         if (Input.GetKey(KeyCode.A) && !facingRight && CanClingToWall()) WallCling();
         if (Input.GetKey(KeyCode.D) && facingRight && CanClingToWall()) WallCling();
+        if (Input.GetKey(KeyCode.S) && CanFastDrop()) BeginFastDrop();
 
         // jumping
         if (Input.GetKeyDown(KeyCode.Space) && CanJump()) {
@@ -97,6 +100,7 @@ public class PlayerController : MonoBehaviour {
             PlayerMovementMode.Horizonal        => new Vector2(input * Speed(), rigidbody2D.velocity.y),
             PlayerMovementMode.ClingingToWall   => new Vector2(input * Speed(), Input.GetAxis("Vertical") * -wallClingSlideSpeed),
             PlayerMovementMode.WallJumping      => new Vector2(wallJumpHoriz, wallJumpVertSpeed),
+            PlayerMovementMode.FastDropping     => new Vector2(input * Speed(), -fastDropVertSpeed),
         };
     }
 
@@ -120,6 +124,7 @@ public class PlayerController : MonoBehaviour {
             PlayerMovementMode.Horizonal        => true,
             PlayerMovementMode.ClingingToWall   => true,
             PlayerMovementMode.WallJumping      => false,
+            PlayerMovementMode.FastDropping     => false,
         }; 
         int maxJumps = (currentLegAbility == LegAbility.DoubleJump) ? 2 : 1;
         if (movementAllowed && jumpCount < maxJumps) {
@@ -128,6 +133,7 @@ public class PlayerController : MonoBehaviour {
             return false;
         }
     }
+
     private bool CanClingToWall() {
         if (currentArmAbility != ArmAbility.WallCling) {
             return false;
@@ -135,6 +141,18 @@ public class PlayerController : MonoBehaviour {
         bool isMovingVertically = Mathf.Abs(rigidbody2D.velocity.y) > float.Epsilon;
         bool isTouchingWall = Physics2D.IsTouchingLayers(cldr, wall);
         return isTouchingWall && isMovingVertically;
+    }
+    
+    private bool CanFastDrop() {
+        if (currentLegAbility != LegAbility.FastDrop) {
+            return false;
+        }
+        return movement switch {
+            PlayerMovementMode.Horizonal        => true,
+            PlayerMovementMode.ClingingToWall   => true,
+            PlayerMovementMode.WallJumping      => false,
+            PlayerMovementMode.FastDropping     => false,
+        }; 
     }
 
     private void Jump() {
@@ -162,6 +180,11 @@ public class PlayerController : MonoBehaviour {
             // if still wall jumping, return to normal movement
             movement = PlayerMovementMode.Horizonal;
         }
+    }
+
+    private void BeginFastDrop() {
+        Debug.Log("fast drop began");
+        movement = PlayerMovementMode.FastDropping;
     }
 
     private void FlipSprite() {

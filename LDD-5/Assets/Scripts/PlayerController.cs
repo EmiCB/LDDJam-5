@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour {
 
     public enum PlayerMovementMode {
         Horizonal,  // Default movement mode
+        Jumping,
         ClingingToWall,
         WallJumping,
         FastDropping,
@@ -64,7 +65,7 @@ public class PlayerController : MonoBehaviour {
 
     private void FixedUpdate() {
         // check grounded w/ projected circle at bottom of player
-        if (Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, ground)) {
+        if (CanGround()) {
             jumpCount = 0;
             movement = PlayerMovementMode.Horizonal;
         }
@@ -86,18 +87,24 @@ public class PlayerController : MonoBehaviour {
             if (movement == PlayerMovementMode.ClingingToWall) {
                 BeginWallJumping();
             } else {
-                Jump();
+                BeginJump();
             }
         }
 
         // handle movement
         Move(Input.GetAxis("Horizontal"));
+
+        // end jumping immediately after 1 frame
+        if (movement == PlayerMovementMode.Jumping) {
+            movement = PlayerMovementMode.Horizonal;
+        }
     }
 
     private Vector2 MoveVelocity(float input) {
         float wallJumpHoriz = facingRight ? -wallJumpHorizSpeed : wallJumpHorizSpeed;
         return movement switch {
             PlayerMovementMode.Horizonal        => new Vector2(input * Speed(), rigidbody2D.velocity.y),
+            PlayerMovementMode.Jumping          => new Vector2(0, jumpForce),
             PlayerMovementMode.ClingingToWall   => new Vector2(input * Speed(), Input.GetAxis("Vertical") * -wallClingSlideSpeed),
             PlayerMovementMode.WallJumping      => new Vector2(wallJumpHoriz, wallJumpVertSpeed),
             PlayerMovementMode.FastDropping     => new Vector2(input * Speed(), -fastDropVertSpeed),
@@ -119,9 +126,17 @@ public class PlayerController : MonoBehaviour {
         else if (facingRight && input < 0) FlipSprite();
     }
 
+    private bool CanGround() {
+        bool isMovingUpward = rigidbody2D.velocity.y > float.Epsilon;
+        bool isNearGround = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, ground);
+        // ground only if not moving up to avoid resetting jumps when doing 1st jump
+        return !isMovingUpward && isNearGround;
+    }
+
     private bool CanJump() {
         bool movementAllowed = movement switch {
             PlayerMovementMode.Horizonal        => true,
+            PlayerMovementMode.Jumping          => false,
             PlayerMovementMode.ClingingToWall   => true,
             PlayerMovementMode.WallJumping      => false,
             PlayerMovementMode.FastDropping     => false,
@@ -149,14 +164,15 @@ public class PlayerController : MonoBehaviour {
         }
         return movement switch {
             PlayerMovementMode.Horizonal        => true,
+            PlayerMovementMode.Jumping          => false,
             PlayerMovementMode.ClingingToWall   => true,
             PlayerMovementMode.WallJumping      => false,
             PlayerMovementMode.FastDropping     => false,
         }; 
     }
 
-    private void Jump() {
-        rigidbody2D.velocity = Vector2.up * jumpForce;
+    private void BeginJump() {
+        movement = PlayerMovementMode.Jumping;
         jumpCount++;
     }
 

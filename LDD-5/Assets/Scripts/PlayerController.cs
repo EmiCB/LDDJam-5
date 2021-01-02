@@ -10,13 +10,28 @@ public class PlayerController : MonoBehaviour {
         WallJumping,
     };
 
+    public enum HeadAbility {
+        None,
+        MovementSpeedUp
+    }
+
+    public enum ArmAbility {
+        None,
+        WallCling
+    }
+
+    public enum LegAbility {
+        None,
+        DoubleJump
+    }
+
     private Rigidbody2D rigidbody2D = null;
 
-    [SerializeField] private float speed = 10.0f;
+    [SerializeField] private float baseSpeed = 10.0f;
+    [SerializeField] private float movementSpeedUpModifier = 2.0f;
     [SerializeField] private float jumpForce = 12.0f;
     [SerializeField] private float groundCheckRadius = 0.5f;
 
-    [SerializeField] private int maxJumps = 1;
     [SerializeField] private int jumpCount = 0;
 
     [SerializeField] private float wallClingSlideSpeed = 0.7f;
@@ -25,6 +40,9 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float wallJumpDuration = 0.3f;
     private bool isClingingToWall = false;
     [SerializeField] private PlayerMovementMode movement = PlayerMovementMode.Horizonal;
+    public HeadAbility currentHeadAbility = HeadAbility.None;
+    public ArmAbility currentArmAbility = ArmAbility.None;
+    public LegAbility currentLegAbility = LegAbility.None;
     [SerializeField] private bool facingRight = true;
     public bool isDead = false;
 
@@ -76,10 +94,17 @@ public class PlayerController : MonoBehaviour {
     private Vector2 MoveVelocity(float input) {
         float wallJumpHoriz = facingRight ? -wallJumpHorizSpeed : wallJumpHorizSpeed;
         return movement switch {
-            PlayerMovementMode.Horizonal        => new Vector2(input * speed, rigidbody2D.velocity.y),
-            PlayerMovementMode.ClingingToWall   => new Vector2(input * speed, Input.GetAxis("Vertical") * -wallClingSlideSpeed),
+            PlayerMovementMode.Horizonal        => new Vector2(input * Speed(), rigidbody2D.velocity.y),
+            PlayerMovementMode.ClingingToWall   => new Vector2(input * Speed(), Input.GetAxis("Vertical") * -wallClingSlideSpeed),
             PlayerMovementMode.WallJumping      => new Vector2(wallJumpHoriz, wallJumpVertSpeed),
         };
+    }
+
+    private float Speed() {
+        if (currentHeadAbility == HeadAbility.MovementSpeedUp) {
+            return baseSpeed * movementSpeedUpModifier;
+        }
+        return baseSpeed;
     }
 
     private void Move(float input) {
@@ -96,6 +121,7 @@ public class PlayerController : MonoBehaviour {
             PlayerMovementMode.ClingingToWall   => true,
             PlayerMovementMode.WallJumping      => false,
         }; 
+        int maxJumps = (currentLegAbility == LegAbility.DoubleJump) ? 2 : 1;
         if (movementAllowed && jumpCount < maxJumps) {
             return true;
         } else {
@@ -103,6 +129,9 @@ public class PlayerController : MonoBehaviour {
         }
     }
     private bool CanClingToWall() {
+        if (currentArmAbility != ArmAbility.WallCling) {
+            return false;
+        }
         bool isMovingVertically = Mathf.Abs(rigidbody2D.velocity.y) > float.Epsilon;
         bool isTouchingWall = Physics2D.IsTouchingLayers(cldr, wall);
         return isTouchingWall && isMovingVertically;

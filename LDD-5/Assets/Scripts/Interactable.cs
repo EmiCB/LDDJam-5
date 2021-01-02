@@ -15,7 +15,7 @@ public class Interactable : MonoBehaviour {
 
 
     void Update() {
-        if (isPlayerInRange) {
+        if (isPlayerInRange && Input.GetKeyDown(KeyCode.E)) {
             Interact();
         }
     }

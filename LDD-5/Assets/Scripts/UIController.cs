@@ -15,29 +15,10 @@ public class UIController : MonoBehaviour {
     }
 
     void Update() {
-        headAbilitySlot.color = headAbilityColorPicker();
-        armAbilitySlot.color = armAbilityColorPicker();
-        legAbilitySlot.color = legAbilityColorPicker();
+        headAbilitySlot.color = ColorPicker.HeadAbilityColorPicker(player.currentHeadAbility);
+        armAbilitySlot.color = ColorPicker.ArmAbilityColorPicker(player.currentArmAbility);
+        legAbilitySlot.color = ColorPicker.LegAbilityColorPicker(player.currentLegAbility);
     }
 
-    private Color headAbilityColorPicker() {
-        return player.currentHeadAbility switch {
-            PlayerController.HeadAbility.None => Color.gray,
-            PlayerController.HeadAbility.MovementSpeedUp => Color.yellow
-        };
-    }
-
-    private Color armAbilityColorPicker() {
-        return player.currentArmAbility switch {
-            PlayerController.ArmAbility.None => Color.gray,
-            PlayerController.ArmAbility.WallCling => Color.yellow
-        };
-    }
-
-    private Color legAbilityColorPicker() {
-        return player.currentLegAbility switch {
-            PlayerController.LegAbility.None => Color.gray,
-            PlayerController.LegAbility.DoubleJump => Color.yellow
-        };
-    }
+    
 }

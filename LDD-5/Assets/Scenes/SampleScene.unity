@@ -649,12 +649,11 @@ MonoBehaviour:
   groundCheckRadius: 0.5
   maxJumps: 1
   jumpCount: 0
-  wallClingSlideSpeed: 0.3
-  wallJumpHorizSpeed: 3
-  wallJumpVertSpeed: 6
+  wallClingSlideSpeed: 0.5
+  wallJumpHorizSpeed: 7
+  wallJumpVertSpeed: 5
   wallJumpDuration: 0.3
-  isClingingToWall: 0
-  isWallJumping: 0
+  movement: 0
   facingRight: 1
   isDead: 0
   groundCheck: {fileID: 2093690861}

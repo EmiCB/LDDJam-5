@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
+
+    public enum PlayerMovementMode {
+        Horizonal,  // Default movement mode
+        ClingingToWall,
+        WallJumping,
+    };
+
     private Rigidbody2D rigidbody2D = null;
 
     [SerializeField] private float speed = 10.0f;
@@ -12,13 +19,12 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private int maxJumps = 1;
     [SerializeField] private int jumpCount = 0;
 
-    [SerializeField] private float wallClingSlideSpeed = 0.3f;
+    [SerializeField] private float wallClingSlideSpeed = 0.7f;
     [SerializeField] private float wallJumpHorizSpeed = 3.0f;
     [SerializeField] private float wallJumpVertSpeed = 6.0f;
     [SerializeField] private float wallJumpDuration = 0.3f;
-    [SerializeField] private bool isClingingToWall = false;
-    [SerializeField] private bool isWallJumping = false;
-
+    private bool isClingingToWall = false;
+    [SerializeField] private PlayerMovementMode movement = PlayerMovementMode.Horizonal;
     [SerializeField] private bool facingRight = true;
     public bool isDead = false;
 
@@ -40,46 +46,44 @@ public class PlayerController : MonoBehaviour {
         // check grounded w/ projected circle at bottom of player
         if (Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, ground)) {
             jumpCount = 0;
-            isClingingToWall = false;
+            movement = PlayerMovementMode.Horizonal;
         }
-        if (!CanClingToWall()) {
-            isClingingToWall = false;
+
+        // End wall cling if no longer in contact
+        if (movement == PlayerMovementMode.ClingingToWall && !CanClingToWall()) {
+            movement = PlayerMovementMode.Horizonal;
         }
     }
 
     private void Update() {
-        // handle inputs
-        Move(Input.GetAxis("Horizontal"));
-
         // wall clinging
         if (Input.GetKey(KeyCode.A) && !facingRight && CanClingToWall()) WallCling();
         if (Input.GetKey(KeyCode.D) && facingRight && CanClingToWall()) WallCling();
 
         // jumping
         if (Input.GetKeyDown(KeyCode.Space) && CanJump()) {
-            if (isClingingToWall) {
+            if (movement == PlayerMovementMode.ClingingToWall) {
                 BeginWallJumping();
             } else {
                 Jump();
             }
         }
 
-        if (isWallJumping) {
-            // Jump away from wall
-            float x = facingRight ? -wallJumpHorizSpeed : wallJumpHorizSpeed;
-            rigidbody2D.velocity =  new Vector2(x, wallJumpVertSpeed);
-        }
+        // handle movement
+        Move(Input.GetAxis("Horizontal"));
     }
 
     private Vector2 MoveVelocity(float input) {
-        if (isClingingToWall) {
-            return new Vector2(input * speed, Input.GetAxis("Vertical") * -wallClingSlideSpeed);
-        }
-        return new Vector2(input * speed, rigidbody2D.velocity.y);
+        float wallJumpHoriz = facingRight ? -wallJumpHorizSpeed : wallJumpHorizSpeed;
+        return movement switch {
+            PlayerMovementMode.Horizonal        => new Vector2(input * speed, rigidbody2D.velocity.y),
+            PlayerMovementMode.ClingingToWall   => new Vector2(input * speed, Input.GetAxis("Vertical") * -wallClingSlideSpeed),
+            PlayerMovementMode.WallJumping      => new Vector2(wallJumpHoriz, wallJumpVertSpeed),
+        };
     }
 
     private void Move(float input) {
-        rigidbody2D.velocity = new Vector2(input * speed, rigidbody2D.velocity.y);
+        rigidbody2D.velocity = MoveVelocity(input);
 
         // flip sprite accordingly
         if (!facingRight && input > 0) FlipSprite();
@@ -87,7 +91,12 @@ public class PlayerController : MonoBehaviour {
     }
 
     private bool CanJump() {
-        if (jumpCount < maxJumps) {
+        bool movementAllowed = movement switch {
+            PlayerMovementMode.Horizonal        => true,
+            PlayerMovementMode.ClingingToWall   => true,
+            PlayerMovementMode.WallJumping      => false,
+        }; 
+        if (movementAllowed && jumpCount < maxJumps) {
             return true;
         } else {
             return false;
@@ -105,21 +114,25 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void WallCling() {
-        isClingingToWall = true;
+        if (movement == PlayerMovementMode.WallJumping) {
+            // if wall jump in progress, don't cling now
+            return;
+        }
+        movement = PlayerMovementMode.ClingingToWall;
         jumpCount = 0;
-
-        rigidbody2D.velocity = new Vector2(rigidbody2D.velocity.x, Mathf.Clamp(rigidbody2D.velocity.y, -wallClingSlideSpeed, float.MaxValue));
     }
 
     private void BeginWallJumping() {
         Debug.Log("wall jump began");
-        isWallJumping = true;
-        isClingingToWall = false;
+        movement = PlayerMovementMode.WallJumping;
         jumpCount = 1;
         Invoke(nameof(EndWallJumping), wallJumpDuration);
     }
     private void EndWallJumping() {
-        isWallJumping = false;
+        if (movement == PlayerMovementMode.WallJumping) {
+            // if still wall jumping, return to normal movement
+            movement = PlayerMovementMode.Horizonal;
+        }
     }
 
     private void FlipSprite() {

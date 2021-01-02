@@ -41,7 +41,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float wallJumpHorizSpeed = 3.0f;
     [SerializeField] private float wallJumpVertSpeed = 6.0f;
     [SerializeField] private float wallJumpDuration = 0.3f;
-    [SerializeField] private float fastDropVertSpeed = 20.0f;
+    public float fastDropVertSpeed = 20.0f;
     [SerializeField] private PlayerMovementMode movement = PlayerMovementMode.Horizonal;
     public HeadAbility currentHeadAbility = HeadAbility.None;
     public ArmAbility currentArmAbility = ArmAbility.None;
@@ -54,6 +54,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private Transform groundCheck = null;
     [SerializeField] private LayerMask ground;
     [SerializeField] private LayerMask wall;
+    [SerializeField] private LayerMask destructable;
 
     private void Awake() {
         rigidbody2D = GetComponent<Rigidbody2D>();
@@ -80,7 +81,7 @@ public class PlayerController : MonoBehaviour {
         // wall clinging
         if (Input.GetKey(KeyCode.A) && !facingRight && CanClingToWall()) WallCling();
         if (Input.GetKey(KeyCode.D) && facingRight && CanClingToWall()) WallCling();
-        if (Input.GetKey(KeyCode.S) && CanFastDrop()) BeginFastDrop();
+        if (Input.GetKeyDown(KeyCode.S) && CanFastDrop()) BeginFastDrop();
 
         // jumping
         if (Input.GetKeyDown(KeyCode.Space) && CanJump()) {
@@ -128,7 +129,8 @@ public class PlayerController : MonoBehaviour {
 
     private bool CanGround() {
         bool isMovingUpward = rigidbody2D.velocity.y > float.Epsilon;
-        bool isNearGround = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, ground);
+        bool isNearGround = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, ground)
+            || Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, destructable);
         // ground only if not moving up to avoid resetting jumps when doing 1st jump
         return !isMovingUpward && isNearGround;
     }
@@ -208,10 +210,5 @@ public class PlayerController : MonoBehaviour {
         Vector3 scaler = transform.localScale;
         scaler.x *= -1;
         transform.localScale = scaler;
-    }
-
-
-    void OnCollisionEnter2D(Collision2D col) {
-        if (col.gameObject.tag == "Killbox") isDead = true;
     }
 }

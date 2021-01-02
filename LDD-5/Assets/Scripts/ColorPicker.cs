@@ -20,7 +20,8 @@ public class ColorPicker {
     public static Color LegAbilityColorPicker(PlayerController.LegAbility legAbility) {
         return legAbility switch {
             PlayerController.LegAbility.None => Color.gray,
-            PlayerController.LegAbility.DoubleJump => Color.green
+            PlayerController.LegAbility.DoubleJump => Color.green,
+            PlayerController.LegAbility.FastDrop => Color.cyan
         };
     }
 }

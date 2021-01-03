@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 3382078847742384934}
   - component: {fileID: 1619969037}
   m_Layer: 3
+  - component: {fileID: 1143849765}
+  m_Layer: 0
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -146,8 +148,8 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!61 &3382078847742384934
-BoxCollider2D:
+--- !u!70 &1143849765
+CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -184,6 +186,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29d2dce4fb2d2214f8db8e24edb0cc57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Size: {x: 0.8, y: 2}
+  m_Direction: 0
 --- !u!1 &3382078848169565967
 GameObject:
   m_ObjectHideFlags: 0

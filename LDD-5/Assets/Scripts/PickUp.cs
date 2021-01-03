@@ -5,6 +5,7 @@ using UnityEngine;
 public class PickUp : Interactable {
     private PlayerController player;
     private SpritePicker spritePicker;
+    private Timer timer;
 
     private PlayerController.HeadAbility oldHeadAbility;
     private PlayerController.ArmAbility oldArmAbility;
@@ -16,9 +17,12 @@ public class PickUp : Interactable {
     private PlayerController.ArmAbility pickUpArmAbility;
     private PlayerController.LegAbility pickUpLegAbility;
 
+    public float timeReduction = 3.0f;
+
     public void Awake() {
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
         spritePicker = GameObject.FindObjectOfType<SpritePicker>();
+        timer = GameObject.FindObjectOfType<Timer>();
 
         pickUpHeadAbility = pickUpData.headAbility;
         pickUpArmAbility = pickUpData.armAbility;
@@ -54,6 +58,8 @@ public class PickUp : Interactable {
                 pickUpLegAbility = oldLegAbility;
                 break;
         }
+
+        timer.timeRemaining -= timeReduction;
     }
 
     /*

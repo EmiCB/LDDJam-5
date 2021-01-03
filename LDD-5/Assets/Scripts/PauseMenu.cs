@@ -9,9 +9,11 @@ public class PauseMenu : MonoBehaviour
 
     public GameObject pauseMenu;
     public GameObject gameOverMenu;
+    public GameObject gameWonMenu;
 
     public PlayerController player;
     public Timer timer;
+    public LevelEnd levelEnd;
 
     void Update() {
         if (Input.GetKeyDown(KeyCode.Escape)) {
@@ -21,6 +23,8 @@ public class PauseMenu : MonoBehaviour
 
         // end game when timer hits 0
         if (timer.timeRemaining == 0 && !gameOverMenu.activeSelf) GameOver();
+
+        if (levelEnd.HasWon() && !gameWonMenu.activeSelf) GameWon();
     }
 
     public void Resume() {
@@ -45,8 +49,12 @@ public class PauseMenu : MonoBehaviour
     }
 
     void GameOver() {
-        Debug.Log("Hi");
         gameOverMenu.SetActive(true);
+        Time.timeScale = 0.0f;
+    }
+
+    void GameWon() {
+        gameWonMenu.SetActive(true);
         Time.timeScale = 0.0f;
     }
 
